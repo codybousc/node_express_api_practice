@@ -1,12 +1,10 @@
 //BASE SETUP
+//============================================================
 
-//=============================================================
+//=========================================================
 
 var User = require('./app/models/user');
 
-//connect to database (hosted on modulus.io)
-
-mongoose.connect('mongodb://<user>:<pass>@apollo.modulusmongo.net:27017/urezIv7i');
 
 //CALL THE PACKAGES-------------------------
 var express    = require('express');
@@ -15,6 +13,9 @@ var bodyParser = require('body-parser');
 var morgan     = require('morgan');
 var mongoose   = require('mongoose');
 var port       = process.env.PORT || 8080;
+
+//connect to database (hosted on MongoLab)
+mongoose.connect('mongodb://cody:1234@ds053764.mongolab.com:53764/nodeapi');
 
 // APP CONFIGURATION
 //use body parser so we can grab info from POST requests
@@ -27,7 +28,7 @@ app.use(bodyParser.json());
 app.use(function(req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type, \Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, content-type, Authorization');
   next();
 });
 
@@ -40,7 +41,7 @@ var apiRouter = express.Router();
 
 //MIDDLEWARE TO USE FOR ALL requests
 //=================================================
-appRouter.use(function(req, res, next) {
+apiRouter.use(function(req, res, next) {
   //do logging
   console.log('Someone just visited the app!');
 
@@ -66,7 +67,39 @@ apiRouter.get('/', function(req, res) {
   res.json({message: 'Yep, up and running!'});
 });
 
-//more API ROUTES
+//USERS ROUTES ( ROUTES THAT END IN /users)
+
+apiRouter.route('/users')
+
+  //create a user
+  .post(function(req, res) {
+      //create a new instance of the user model
+      var user = new User();
+
+      //set the users info (comes from request)
+      user.name = req.body.name;
+      user.username = req.body.username;
+      user.password = req.body.password;
+
+      //save the user and check for errors
+      user.save(function(err) {
+        if (err) res.send(err);
+
+        res.json({message: 'User Created!'});
+      });
+    })
+
+      //get all the users
+      .get(function(req, res) {
+          User.find(function(err, users) {
+              if (err) res.send(err);
+
+              //return the users
+                res.json(users);
+          });
+      })
+
+
 
 
 //REGISTER ROUTES
