@@ -66,8 +66,9 @@ var apiRouter = express.Router();
 apiRouter.get('/', function(req, res) {
   res.json({message: 'Yep, up and running!'});
 });
-
-//USERS ROUTES ( ROUTES THAT END IN /users)
+//==============================================================
+//USERS ROUTES
+//on routes that end in /users
 
 apiRouter.route('/users')
 
@@ -87,7 +88,7 @@ apiRouter.route('/users')
 
         res.json({message: 'User Created!'});
       });
-    })
+    }) //WAS GETTING AN ERROR 'UNEXPECTED .' WHEN I HAD A SEMICOLON HERE
 
       //get all the users
       .get(function(req, res) {
@@ -99,6 +100,42 @@ apiRouter.route('/users')
           });
       })
 
+//on routes that end in /users/:user_id
+
+apiRouter.route('/users/:user_id')
+
+    //get the user with that id
+    //(accessed at GET http://localhost:8080/api/users/:user_id)
+    .get(function(req, res) {
+        User.findById(req.params.user_id, function(err, user) {
+            if (err) res.send(err);
+
+            //return specificified user
+            res.json(user);
+        });
+    })
+
+    //update a user with specified id
+    .put(function(req, res) {
+
+        //use our user model to find the user we want
+        User.findById(req.params.user_id, function(err, user) {
+            if(err) res.send(err);
+
+            //update the users info only if it's new
+            if(req.body.name) user.name = req.body.name;
+            if(req.body.username) user.username = req.body.username;
+            if(req.body.password) user.password = req.body.password
+
+            //save the user
+            user.save(function(err) {
+                if(err) res.send(err );
+
+                //return a message
+                res.json({message: "User Updated!"})
+            });
+        }); 
+    })
 
 
 
