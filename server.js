@@ -12,7 +12,10 @@ var app        = express();
 var bodyParser = require('body-parser');
 var morgan     = require('morgan');
 var mongoose   = require('mongoose');
+var jwt        = require('jsonwebtoken');
 var port       = process.env.PORT || 8080;
+
+var superSecret = 'ilovescotchscotchyscotchscotch';
 
 //connect to database (hosted on MongoLab)
 mongoose.connect('mongodb://cody:1234@ds053764.mongolab.com:53764/nodeapi');
@@ -38,6 +41,54 @@ app.use(morgan('dev'));
 //ROUTES FOR THE API
 //================================================
 var apiRouter = express.Router();
+
+//ROUTE FOR AUTHENTICATING USERS
+//Json web token created here and returned to user
+apiRouter.post('/authenticate', function(req, res) {
+
+  //find the user
+  //selct the name username and password explicitly
+  User.findOne({
+    username: req.body.username
+  }).select('name username password').exec(function(err, user) {
+    if (err) throw err;
+
+    //no user with that username was found
+    if(!user) {
+      res.json({
+        success: false,
+        message: 'Authentication failed. User not found.'
+      });
+    }
+    else if (user) {
+      //check if password matches
+      var validPassword = user.comparePassword(req.body.password);
+      if(!validPassword) {
+        res.json({
+          success: false,
+          message: 'Invalid Password. '
+        });
+      }
+      else {
+        //if user is found and password is correct
+        //create a token
+        var token = jwt.sign({
+          name: user.name,
+          username: user.username
+        }, superSecret, {
+          expiresInMinutes: 2880 //48 hours
+        });
+
+        //return the information including the token as JSON
+        res.json({
+          success: true,
+          message: 'Enjoy your token!',
+          token: token
+        });
+      }
+    }
+  })
+});
 
 //MIDDLEWARE TO USE FOR ALL requests
 //=================================================
@@ -146,7 +197,7 @@ apiRouter.route('/users/:user_id')
 
           res.json({message: 'Successfully deleted'});
       });
-    }); 
+    });
 
 
 
